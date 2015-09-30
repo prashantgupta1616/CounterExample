@@ -1,0 +1,62 @@
+package com.ctl;
+
+import java.io.IOException;
+import java.util.StringTokenizer;
+
+import javax.swing.text.DefaultEditorKit.CutAction;
+
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Mapper;
+
+/**
+ * @author Prashant Gupta
+ *
+ */
+// <KEYIN, VALUEIN, KEYOUT, VALUEOUT>
+public class WordMapper extends Mapper<Object, Text, Text, IntWritable> {
+
+	// Defining the required variable for the Mapper Job
+	private Text wordKeyVarible = new Text();
+	private final static IntWritable wordCountValueVarible = new IntWritable(1);
+	enum customCounter {
+		UpperCaseCount, LowerCaseCount,SpecialCaseCount;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.apache.hadoop.mapreduce.Mapper#map(KEYIN, VALUEIN,
+	 * org.apache.hadoop.mapreduce.Mapper.Context) Overriding the Map Function
+	 * SO InputFile's offset will be a Key and corresponding Whole line will
+	 * become Value
+	 */
+	@Override
+	// Map<KEYIN, VALUEIN,Context>
+	public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
+
+		// Converting the line into Tokens
+		StringTokenizer tokens = new StringTokenizer(value.toString());
+		// Iterating the Tokens using While loop
+		while (tokens.hasMoreTokens()) {
+			/*wordKeyVarible.set(tokens.nextToken());*/
+			//A-65  Z-90 | a-97 b-122
+			
+			String wordVariable=tokens.nextToken();
+			
+			if(wordVariable.charAt(0)>=65 && wordVariable.charAt(0)<90){
+				context.getCounter(customCounter.UpperCaseCount).increment(1);				
+			}else if(wordVariable.charAt(0)>=97 && wordVariable.charAt(0)<122){
+				context.getCounter(customCounter.LowerCaseCount).increment(1);
+			}else{
+				context.getCounter(customCounter.SpecialCaseCount).increment(1);
+			}
+			wordKeyVarible.set(wordVariable);
+			// Writing the key-value pairs in Context object
+			context.write(wordKeyVarible, wordCountValueVarible);
+			
+		}
+
+	}
+
+}
